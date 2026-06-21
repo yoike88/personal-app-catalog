@@ -26,7 +26,7 @@ Docker、Node.js、Kubernetes CLI 和主力开发 CLI 优先放在 WSL。Python 
 | `network` | 是，账号手工 | 可信网络和远程文件 | Tailscale, WinSCP |
 | `automation` | 是，配置另备 | 自动化和文本扩展 | AutoHotkey, Espanso |
 | `communication` | 是，账号手工 | 通讯、会议和输入法 | WeChat, WeType, WeCom, Tencent Meeting, Telegram |
-| `dev-extra` | 是 | Windows GUI 开发增强 | DBeaver, DB Browser for SQLite, mise, SourceGit, Bruno, DevToys, WinMerge, Graphviz, draw.io |
+| `dev-extra` | 是 | Windows GUI 开发增强 | DBeaver, DB Browser for SQLite, SourceGit, Bruno, DevToys, WinMerge, draw.io |
 | `k8s-toolkit` | 是，集群凭据手工 | Windows 侧 Kubernetes / K3s 备用工具链 | kubectl, Helm, k9s, kubectx, kubens, stern, ORAS |
 | `maintenance` | 是，按需使用 | 系统维护、卸载、硬件和磁盘诊断 | BCUninstaller, Sysinternals Suite, WizTree, CrystalDiskInfo, CrystalDiskMark, HWiNFO |
 | `desktop-enhance` | 是 | 桌面增强 | Twinkle Tray, EarTrumpet |
