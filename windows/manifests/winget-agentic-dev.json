@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
-  "CreationDate": "2026-06-20T00:00:00.000-00:00",
+  "CreationDate": "2026-06-22T00:00:00.000-00:00",
   "Sources": [
     {
       "Packages": [
@@ -9,9 +9,7 @@
         { "PackageIdentifier": "Anthropic.Claude" },
         { "PackageIdentifier": "GitHub.cli" },
         { "PackageIdentifier": "Microsoft.WSL" },
-        { "PackageIdentifier": "Docker.DockerDesktop" },
-        { "PackageIdentifier": "Python.PythonInstallManager" },
-        { "PackageIdentifier": "OpenJS.NodeJS.LTS" }
+        { "PackageIdentifier": "Python.PythonInstallManager" }
       ],
       "SourceDetails": {
         "Argument": "https://cdn.winget.microsoft.com/cache",
