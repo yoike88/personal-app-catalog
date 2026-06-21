@@ -6,10 +6,19 @@
 
 ## 快速使用
 
+先做结构校验和安装预览：
+
 ```powershell
 cd <repo-path>
 Set-ExecutionPolicy -Scope Process Bypass
-.\windows\bootstrap.ps1
+.\windows\validate.ps1
+.\windows\bootstrap.ps1 -Plan -Report
+```
+
+确认后安装默认层：
+
+```powershell
+.\windows\bootstrap.ps1 -Report
 ```
 
 默认只安装 `core + agentic-dev`。
@@ -17,19 +26,25 @@ Set-ExecutionPolicy -Scope Process Bypass
 常用显式 profile：
 
 ```powershell
-.\windows\bootstrap.ps1 -Profile daily
-.\windows\bootstrap.ps1 -Profile backup
-.\windows\bootstrap.ps1 -Profile network
-.\windows\bootstrap.ps1 -Profile automation
-.\windows\bootstrap.ps1 -Profile communication
-.\windows\bootstrap.ps1 -Profile dev-extra
-.\windows\bootstrap.ps1 -Profile desktop-enhance
-.\windows\bootstrap.ps1 -Profile media
-.\windows\bootstrap.ps1 -Profile media-toolkit
-.\windows\bootstrap.ps1 -Profile gaming
-.\windows\bootstrap.ps1 -Profile local-ai
-.\windows\bootstrap.ps1 -Profile proxy-core
-.\windows\bootstrap.ps1 -WithScoop
+.\windows\bootstrap.ps1 -Profile daily -Report
+.\windows\bootstrap.ps1 -Profile backup -Report
+.\windows\bootstrap.ps1 -Profile network -Report
+.\windows\bootstrap.ps1 -Profile automation -Report
+.\windows\bootstrap.ps1 -Profile communication -Report
+.\windows\bootstrap.ps1 -Profile dev-extra -Report
+.\windows\bootstrap.ps1 -Profile desktop-enhance -Report
+.\windows\bootstrap.ps1 -Profile media -Report
+.\windows\bootstrap.ps1 -Profile media-toolkit -Report
+.\windows\bootstrap.ps1 -Profile gaming -Report
+.\windows\bootstrap.ps1 -Profile local-ai -Report
+.\windows\bootstrap.ps1 -Profile proxy-core -Report
+.\windows\bootstrap.ps1 -WithScoop -Report
+```
+
+组合安装前建议先预览：
+
+```powershell
+.\windows\bootstrap.ps1 -Profile daily,network,automation -WithScoop -Plan -Report
 ```
 
 更新和快照：
@@ -48,6 +63,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 | `windows/docs/sources.md` | 来源优先级和非 winget 记录方式 |
 | `windows/docs/manual-boundaries.md` | 敏感、授权、硬件、代理、远控等手工边界 |
 | `windows/docs/operations.md` | 安装、更新、维护流程 |
+| `windows/docs/recovery-playbook.md` | 新设备恢复顺序和人工边界 |
 
 ## 目录规则
 
@@ -58,3 +74,4 @@ Set-ExecutionPolicy -Scope Process Bypass
 - 同一应用只保留一个主来源。
 - Store、GitHub Releases、官方安装器、语言包管理器、Docker/WSL 和便携应用可以进入目录，但要明确是否可自动恢复。
 - 订阅、节点、授权码、设备码、私钥、token、备份密钥和模型数据不进入 Git。
+- 提交前运行 `windows/validate.ps1`；恢复前优先使用 `-Plan -Report` 确认将要执行的安装。
