@@ -8,6 +8,8 @@
 .\windows\validate.ps1
 ```
 
+WSL 发行版安装后，再运行：
+
 ```bash
 bash wsl/validate.sh
 ```
@@ -32,10 +34,12 @@ CI（`.github/workflows/validate.yml`）会运行 `validate.ps1`、`wsl/validate
 恢复新设备前建议先预览：
 
 ```powershell
+.\windows\validate.ps1
+.\windows\wsl-distro.ps1 -Plan
 .\windows\bootstrap.ps1 -Plan -Report
 ```
 
-`-Plan` 只展示将要安装的 profile 和包，不执行安装。它会同时显示 winget JSON manifest、Microsoft Store txt manifest 和 Scoop 清单中的安装计划。`-Report` 会生成 `windows/reports/bootstrap-report-*.json` 和 `windows/reports/bootstrap-report-*.txt`。
+`wsl-distro.ps1 -Plan` 只展示 WSL 发行版检查或安装计划，不安装发行版。`bootstrap.ps1 -Plan` 只展示将要安装的 profile 和包，不执行安装。它会同时显示 winget JSON manifest、Microsoft Store txt manifest 和 Scoop 清单中的安装计划。`-Report` 会生成 `windows/reports/bootstrap-report-*.json` 和 `windows/reports/bootstrap-report-*.txt`。
 
 组合 profile 也建议先预览：
 
@@ -89,9 +93,25 @@ Scoop CLI：
 .\windows\bootstrap.ps1 -Profile daily,network,automation,dev-extra -WithScoop -Report
 ```
 
+## WSL 发行版准备
+
+WSL 脚本必须在已安装的 Linux 发行版里执行。默认发行版基线是 `Ubuntu-24.04`：
+
+```powershell
+.\windows\wsl-distro.ps1 -Install -Distro Ubuntu-24.04 -SetDefault
+```
+
+如果要查看本机可安装的发行版名称：
+
+```powershell
+wsl --list --online
+```
+
+首次安装发行版后，需要启动该发行版一次，创建 Linux 用户和密码。
+
 ## WSL 侧初始化
 
-WSL 侧是主开发、运维、Docker 和 CLI 执行环境。先校验和预览：
+WSL 侧是主开发、运维、Docker 和 CLI 执行环境。进入 WSL 后先校验和预览：
 
 ```bash
 bash wsl/validate.sh
@@ -161,10 +181,11 @@ mise upgrade
 2. 判断是否可自动恢复。
 3. 判断是否涉及账号、授权、设备绑定或本地专属配置。
 4. Windows GUI 工具按来源放入合适的 `winget-*.json` 或 `msstore-*.txt`。
-5. 开发 CLI、K8s、Docker、Node.js、Python 主力工具优先放入 `wsl/` 清单。
-6. 如果不可自动恢复，写入 `sources.md`、`manual-boundaries.md` 或 `wsl/docs/wsl-boundaries.md`。
-7. 如果只是尝鲜，不进入 manifest。
-8. 修改完成后执行 `windows/validate.ps1` 和 `bash wsl/validate.sh`。
+5. WSL 发行版和开发基线写入 WSL 文档和 Windows 侧 `wsl-distro.ps1` 默认值。
+6. 开发 CLI、K8s、Docker、Node.js、Python 主力工具优先放入 `wsl/` 清单。
+7. 如果不可自动恢复，写入 `sources.md`、`manual-boundaries.md` 或 `wsl/docs/wsl-boundaries.md`。
+8. 如果只是尝鲜，不进入 manifest。
+9. 修改完成后执行 `windows/validate.ps1` 和 `bash wsl/validate.sh`。
 
 ## Git 初始化
 
