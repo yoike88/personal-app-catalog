@@ -117,6 +117,32 @@ RC
   echo "==> Enabled mise activation in ${rc}. Open a new shell or run: source ${rc}"
 }
 
+ensure_shell_hooks() {
+  local rc="${HOME}/.bashrc"
+  if [[ "$PLAN" == true ]]; then
+    echo "[plan] ensure starship/zoxide/direnv/fzf hooks in ${rc}"
+    return
+  fi
+  if [[ -f "$rc" ]] && grep -qF 'personal-app-catalog cli hooks' "$rc"; then
+    return
+  fi
+  cat >> "$rc" <<'RC'
+
+# personal-app-catalog cli hooks (each guarded so it no-ops until the tool exists)
+command -v starship >/dev/null 2>&1 && eval "$(starship init bash)"
+command -v zoxide   >/dev/null 2>&1 && eval "$(zoxide init bash)"
+command -v direnv   >/dev/null 2>&1 && eval "$(direnv hook bash)"
+if command -v fzf >/dev/null 2>&1; then
+  if fzf --bash >/dev/null 2>&1; then
+    eval "$(fzf --bash)"
+  elif [[ -f /usr/share/doc/fzf/examples/key-bindings.bash ]]; then
+    source /usr/share/doc/fzf/examples/key-bindings.bash
+  fi
+fi
+RC
+  echo "==> Added starship/zoxide/direnv/fzf hooks to ${rc}."
+}
+
 install_mise() {
   if ! command -v mise >/dev/null 2>&1; then
     echo "==> installing mise"
@@ -211,6 +237,10 @@ fi
 
 if [[ "$INSTALL_DOCKER" == true ]]; then
   install_docker_engine
+fi
+
+if [[ "$INSTALL_BASE" == true || "$INSTALL_CLI" == true ]]; then
+  ensure_shell_hooks
 fi
 
 echo "==> WSL bootstrap completed."

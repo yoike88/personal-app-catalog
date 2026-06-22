@@ -104,6 +104,8 @@ eval "$(mise activate bash)"
 
 首次安装后需要新开一个 shell，或执行 `source ~/.bashrc`。使用 zsh 时改写 `mise activate zsh` 到 `~/.zshrc`。
 
+`bootstrap.sh --base`/`--cli` 还会幂等写入 starship、zoxide、direnv、fzf 的 shell 钩子，每行用 `command -v` 守卫，工具没装时自动跳过。这些钩子目前只覆盖 bash；zsh 用户需自行改写对应的 `init zsh` / `hook zsh` 形式。
+
 mise、Scoop、Docker 都通过上游安装脚本（`curl | sh`）引导，刻意不固定版本：好处是跟随上游修复，代价是恢复结果不完全可复现。
 
 ## 与 Windows 的分工
