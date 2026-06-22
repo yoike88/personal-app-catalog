@@ -204,6 +204,25 @@ function Invoke-TerminalConfig {
     Write-Host "    merged Windows Terminal defaults into $settingsPath"
 }
 
+function Add-GitInclude {
+    param([string] $Path)
+
+    $existing = @()
+    try {
+        $existing = @(& git config --global --get-all include.path 2>$null)
+    } catch {
+        $existing = @()
+    }
+
+    if ($existing -contains $Path) {
+        Write-Host "    include.path already references $Path"
+        return
+    }
+
+    & git config --global --add include.path $Path
+    Write-Host "    added include.path -> $Path"
+}
+
 function Invoke-GitConfig {
     Write-Host "==> Git shared config"
 
@@ -216,26 +235,34 @@ function Invoke-GitConfig {
     $target = Join-Path $HOME "catalog.gitconfig"
     Copy-Template -Source $shared -Destination $target
 
+    $deltaSource = Join-Path $ConfigDir "git/gitconfig.delta"
+    $deltaTarget = Join-Path $HOME "catalog-delta.gitconfig"
+    Copy-Template -Source $deltaSource -Destination $deltaTarget
+
     # Plan mode performs no external commands, matching bootstrap.ps1's convention.
     if ($Plan.IsPresent) {
         Write-Host "    [plan] add include.path -> $target (if not already present)"
+        Write-Host "    [plan] add include.path -> $deltaTarget (only if delta is installed)"
         return
     }
 
-    $existing = @()
-    try {
-        $existing = @(& git config --global --get-all include.path 2>$null)
-    } catch {
-        $existing = @()
-    }
+    Add-GitInclude -Path $target
 
-    if ($existing -contains $target) {
-        Write-Host "    include.path already references $target"
-        return
+    # delta pager config is only worth wiring up when delta is actually installed.
+    if (Get-Command delta -ErrorAction SilentlyContinue) {
+        Add-GitInclude -Path $deltaTarget
+    } else {
+        Write-Host "    [skip] delta not installed; not wiring delta pager (see hint below)"
     }
+}
 
-    & git config --global --add include.path $target
-    Write-Host "    added include.path -> $target"
+function Write-DependencyHint {
+    $optional = @("delta", "fzf", "starship", "lazygit", "bat")
+    $missing = @($optional | Where-Object { -not (Get-Command $_ -ErrorAction SilentlyContinue) })
+    if ($missing.Count -gt 0) {
+        Write-Host "==> Optional tools not found: $($missing -join ', ')"
+        Write-Host "    These power the profile/Git config. Install via: .\windows\bootstrap.ps1 -WithScoop"
+    }
 }
 
 if (-not ($Pwsh -or $Terminal -or $Git -or $All)) {
@@ -250,6 +277,8 @@ if ($Plan.IsPresent) {
 if ($All -or $Pwsh)     { Invoke-PwshConfig }
 if ($All -or $Terminal) { Invoke-TerminalConfig }
 if ($All -or $Git)      { Invoke-GitConfig }
+
+Write-DependencyHint
 
 if ($Plan.IsPresent) {
     Write-Host "==> Plan completed."

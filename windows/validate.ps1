@@ -357,6 +357,7 @@ function Test-RequiredFiles {
         "windows/config/pwsh/modules.txt",
         "windows/config/terminal/settings.defaults.json",
         "windows/config/git/gitconfig.shared",
+        "windows/config/git/gitconfig.delta",
         "windows/docs/config.md",
         "wsl/bootstrap.sh",
         "wsl/validate.sh",

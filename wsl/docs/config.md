@@ -23,13 +23,26 @@
 
 | 模板 | 目标路径 | 作用 |
 |---|---|---|
-| `config/nvim/init.lua` | `~/.config/nvim/init.lua` | 引导 `lazy.nvim`，安装一组精选插件（treesitter、telescope、mason/lspconfig、gitsigns、lualine、which-key、comment、autopairs、tokyonight），首次启动 `nvim` 时自动安装 |
+| `config/nvim/init.lua` | `~/.config/nvim/init.lua` | 引导 `lazy.nvim`，安装一组精选插件，首次启动 `nvim` 时自动安装（见下） |
 | `config/starship/starship.toml` | `~/.config/starship.toml` | 统一 shell prompt：目录、git、node/python 版本、kubernetes context、命令耗时 |
 | `config/tmux/tmux.conf` | `~/.tmux.conf` | 鼠标、256 色、vi 复制模式、直观分屏、vi 风格 pane 导航 |
 | `config/bat/config` | `~/.config/bat/config` | bat 主题和显示风格 |
 | `config/lazygit/config.yml` | `~/.config/lazygit/config.yml` | lazygit 界面与 delta 集成 |
-| `config/git/gitconfig.shared` | `~/.config/git/catalog.gitconfig` | 通过 `include.path` 引入的共享 Git 配置：delta pager、常用 alias、合理默认值（不含身份） |
+| `config/git/gitconfig.shared` | `~/.config/git/catalog.gitconfig` | 通过 `include.path` 引入的共享 Git 配置：常用 alias、合理默认值（不含身份，无外部依赖） |
+| `config/git/gitconfig.delta` | `~/.config/git/catalog-delta.gitconfig` | delta pager 设置，仅在检测到 `delta` 时才通过 `include.path` 引入 |
 | `config/bash/aliases.sh` | `~/.config/personal-app-catalog/aliases.sh` | 常用 alias（`ll`、`gs`、`lg` 等），从 `.bashrc` guarded 块 source |
+
+## Neovim 插件与依赖
+
+`init.lua` 通过 `lazy.nvim` 安装：tokyonight、treesitter、telescope、nvim-cmp（+ LuaSnip/friendly-snippets 补全与片段）、mason + mason-lspconfig + lspconfig（自动安装并接线 `lua_ls`、`pyright`、`ts_ls`、`bashls`、`jsonls`、`yamlls`，补全 capability 来自 cmp）、conform.nvim（格式化，`<leader>f`）、trouble.nvim（诊断列表 `<leader>xx`）、oil.nvim（文件浏览 `-`）、gitsigns、lualine、which-key、Comment、autopairs。
+
+常用键位：`gd`/`gr`/`K`/`<leader>rn`/`<leader>ca`（LSP）、`<leader>ff`/`<leader>fg`/`<leader>fb`（telescope）。
+
+**剪贴板桥接**：`clipboard=unnamedplus` 在 WSL 里要与 Windows 剪贴板互通，需要 `win32yank.exe` 在 PATH 上。`init.lua` 检测到它时会自动配置 `vim.g.clipboard`；没有则保持默认。`win32yank` 是 Windows 侧辅助工具，不由本脚本自动安装（可从其 release 下载放入 PATH）。
+
+## 依赖闭环
+
+`delta` 的 pager 配置拆到独立的 `gitconfig.delta`，`--config` 只在检测到 `delta` 时才引入它（WSL 的 `delta@latest` 在 `cli.txt` 里；若只跑 `--config` 而没装 `--cli`，则跳过 delta pager，Git 用默认 pager，不会报错）。
 
 ## 边界
 

@@ -1,18 +1,10 @@
 # Managed by personal-app-catalog. Sanitized template only — no identity, no credentials.
 # Referenced from the global Git config via include.path; your ~/.gitconfig keeps
 # user.name / user.email / signing settings. Applied by `wsl/bootstrap.sh --config`.
+# delta-specific settings live in gitconfig.delta, included only when delta is installed.
 
 [core]
-	pager = delta
 	autocrlf = input
-
-[interactive]
-	diffFilter = delta --color-only
-
-[delta]
-	navigate = true
-	line-numbers = true
-	side-by-side = false
 
 [merge]
 	conflictstyle = zdiff3

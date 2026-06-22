@@ -30,7 +30,16 @@
 | `config/pwsh/modules.txt` | `Install-Module -Scope CurrentUser` | 模块清单：PSReadLine、posh-git、Terminal-Icons、PSFzf |
 | `config/pwsh/profile.ps1` | `catalog.profile.ps1`（由 `$PROFILE` dot-source） | PSReadLine 历史预测、模块按存在与否加载、starship、PSFzf 键位、常用 alias |
 | `config/terminal/settings.defaults.json` | Windows Terminal `settings.json`（深合并） | 默认字体、配色、padding 等 defaults |
-| `config/git/gitconfig.shared` | `~\catalog.gitconfig`（通过 `include.path` 引入） | delta pager、常用 alias、合理默认值（不含身份） |
+| `config/git/gitconfig.shared` | `~\catalog.gitconfig`（通过 `include.path` 引入） | 常用 alias、合理默认值（merge/diff/pull/push/init/rebase；不含身份，无外部依赖） |
+| `config/git/gitconfig.delta` | `~\catalog-delta.gitconfig`（仅在检测到 delta 时通过 `include.path` 引入） | delta pager 与 diff filter 设置 |
+
+## 依赖闭环
+
+`delta` / `fzf` / `starship` / `lazygit` / `bat` 在 Windows 只存在于 `scoop-cli.txt`（需 `-WithScoop` 才装），不在默认 winget 层。因此：
+
+- Git 的 delta pager 拆到独立的 `gitconfig.delta`，`configure.ps1 -Git` 只在检测到 `delta` 时才通过 `include.path` 引入它；否则 Git 用默认 pager，不会因缺 delta 而报错。
+- PowerShell profile 对 starship/PSFzf/bat/lazygit 都做了存在性判断，缺失时只是不生效。
+- `configure.ps1` 结束时会列出未找到的可选工具，并提示用 `.\windows\bootstrap.ps1 -WithScoop` 安装（仅提示，不自动安装）。
 
 ## 边界
 

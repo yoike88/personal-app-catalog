@@ -341,18 +341,36 @@ install_configs() {
   # Git: reference the shared config from the global config; identity stays manual.
   local git_shared="${HOME}/.config/git/catalog.gitconfig"
   backup_then_copy "${CONFIG_DIR}/git/gitconfig.shared" "$git_shared"
-  if command -v git >/dev/null 2>&1; then
-    if [[ "$PLAN" == true ]]; then
-      echo "  [plan] git config --global include.path ${git_shared}"
-    elif git config --global --get-all include.path 2>/dev/null | grep -qxF "$git_shared"; then
-      echo "  include.path already references ${git_shared}"
-    else
-      git config --global --add include.path "$git_shared"
-      echo "  added include.path -> ${git_shared}"
-    fi
+  ensure_git_include "$git_shared"
+
+  # delta pager config is only worth wiring up when delta is actually installed,
+  # otherwise Git would point its pager at a missing command.
+  local git_delta="${HOME}/.config/git/catalog-delta.gitconfig"
+  backup_then_copy "${CONFIG_DIR}/git/gitconfig.delta" "$git_delta"
+  if [[ "$PLAN" == true ]]; then
+    echo "  [plan] include ${git_delta} only if delta is installed"
+  elif command -v delta >/dev/null 2>&1; then
+    ensure_git_include "$git_delta"
+  else
+    echo "  [skip] delta not installed; not wiring delta pager (install via --cli)"
   fi
 
   ensure_alias_sourcing
+}
+
+ensure_git_include() {
+  local path="$1"
+  if ! command -v git >/dev/null 2>&1; then
+    return
+  fi
+  if [[ "$PLAN" == true ]]; then
+    echo "  [plan] git config --global include.path ${path}"
+  elif git config --global --get-all include.path 2>/dev/null | grep -qxF "$path"; then
+    echo "  include.path already references ${path}"
+  else
+    git config --global --add include.path "$path"
+    echo "  added include.path -> ${path}"
+  fi
 }
 
 if [[ "$INSTALL_BASE" == true ]]; then
