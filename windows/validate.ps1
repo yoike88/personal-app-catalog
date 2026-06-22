@@ -47,6 +47,52 @@ function Get-MarkdownCodeTokensFromLine {
     $tokens.ToArray()
 }
 
+function Get-ActiveListItems {
+    param([string] $Path)
+
+    if (-not (Test-Path $Path)) {
+        return @()
+    }
+
+    Get-Content -Path $Path |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { $_ -and -not $_.StartsWith("#") }
+}
+
+function Test-ListFile {
+    param(
+        [string] $Path,
+        [string] $Name,
+        [bool] $RequireMiseSelector = $false
+    )
+
+    if (-not (Test-Path $Path)) {
+        Add-Failure "Missing list file: $Name"
+        return @()
+    }
+
+    $items = @(Get-ActiveListItems -Path $Path)
+    if ($items.Count -eq 0) {
+        Add-Failure "$Name has no active entries."
+        return @()
+    }
+
+    $seen = @{}
+    foreach ($item in $items) {
+        if ($seen.ContainsKey($item)) {
+            Add-Failure "Duplicate entry '$item' in $Name."
+        } else {
+            $seen[$item] = $true
+        }
+
+        if ($RequireMiseSelector -and $item -notmatch '@') {
+            Add-Failure "$Name entry '$item' should include a mise selector such as @latest, @lts, or an exact version."
+        }
+    }
+
+    $items
+}
+
 function Get-BootstrapProfiles {
     if (-not (Test-Path $BootstrapPath)) {
         Add-Failure "Missing bootstrap.ps1."
@@ -76,6 +122,16 @@ function Get-ManifestProfiles {
 
     Get-ChildItem -Path $ManifestDir -Filter "winget-*.json" |
         ForEach-Object { $_.BaseName -replace '^winget-', '' } |
+        Sort-Object -Unique
+}
+
+function Get-MsstoreProfiles {
+    if (-not (Test-Path $ManifestDir)) {
+        return @()
+    }
+
+    Get-ChildItem -Path $ManifestDir -Filter "msstore-*.txt" |
+        ForEach-Object { $_.BaseName -replace '^msstore-', '' } |
         Sort-Object -Unique
 }
 
@@ -113,6 +169,31 @@ function Test-WingetManifests {
     }
 }
 
+function Test-MsstoreManifests {
+    param([string[]] $BootstrapProfiles)
+
+    $seen = @{}
+    foreach ($file in Get-ChildItem -Path $ManifestDir -Filter "msstore-*.txt") {
+        $profile = $file.BaseName -replace '^msstore-', ''
+        if ($BootstrapProfiles -notcontains $profile) {
+            Add-Failure "Microsoft Store manifest $($file.Name) has no matching bootstrap profile."
+        }
+
+        $items = @(Test-ListFile -Path $file.FullName -Name $file.Name)
+        foreach ($item in $items) {
+            if ($item -notmatch '^[A-Za-z0-9]+$') {
+                Add-Failure "Microsoft Store package ID '$item' in $($file.Name) should be alphanumeric."
+            }
+
+            if ($seen.ContainsKey($item)) {
+                Add-Failure "Duplicate Microsoft Store package '$item' in $($seen[$item]) and $($file.Name)"
+            } else {
+                $seen[$item] = $file.Name
+            }
+        }
+    }
+}
+
 function Get-AllSetFromBootstrap {
     if (-not (Test-Path $BootstrapPath)) {
         return @()
@@ -145,6 +226,9 @@ function Get-AllSetFromCatalog {
 
     foreach ($line in $lines) {
         if (-not $inAllSection) {
+            if ($line.Contains("##") -and $line.Contains("all") -and $line.Contains("boundary")) {
+                $inAllSection = $true
+            }
             if ($line.Contains("##") -and $line.Contains("all") -and $line.Contains("边界")) {
                 $inAllSection = $true
             }
@@ -152,13 +236,16 @@ function Get-AllSetFromCatalog {
         }
 
         if (-not $inIncludeBlock) {
+            if ($line.Contains("includes")) {
+                $inIncludeBlock = $true
+            }
             if ($line.Contains("只包含")) {
                 $inIncludeBlock = $true
             }
             continue
         }
 
-        if ($line.Contains("不包含")) {
+        if ($line.Contains("excludes") -or $line.Contains("不包含")) {
             break
         }
 
@@ -278,52 +365,6 @@ function Test-Gitignore {
     }
 }
 
-function Get-ActiveListItems {
-    param([string] $Path)
-
-    if (-not (Test-Path $Path)) {
-        return @()
-    }
-
-    Get-Content -Path $Path |
-        ForEach-Object { $_.Trim() } |
-        Where-Object { $_ -and -not $_.StartsWith("#") }
-}
-
-function Test-ListFile {
-    param(
-        [string] $Path,
-        [string] $Name,
-        [bool] $RequireMiseSelector = $false
-    )
-
-    if (-not (Test-Path $Path)) {
-        Add-Failure "Missing WSL list file: $Name"
-        return @()
-    }
-
-    $items = @(Get-ActiveListItems -Path $Path)
-    if ($items.Count -eq 0) {
-        Add-Failure "$Name has no active entries."
-        return @()
-    }
-
-    $seen = @{}
-    foreach ($item in $items) {
-        if ($seen.ContainsKey($item)) {
-            Add-Failure "Duplicate WSL entry '$item' in $Name."
-        } else {
-            $seen[$item] = $true
-        }
-
-        if ($RequireMiseSelector -and $item -notmatch '@') {
-            Add-Failure "$Name entry '$item' should include a mise selector such as @latest, @lts, or an exact version."
-        }
-    }
-
-    $items
-}
-
 function Test-WslFiles {
     $required = @(
         "wsl/bootstrap.sh",
@@ -367,9 +408,9 @@ function Test-WslFirstBoundaries {
     }
 
     $agenticContent = Get-Content -Path $agenticManifest -Raw
-    foreach ($forbidden in @("Docker.DockerDesktop", "OpenJS.NodeJS.LTS")) {
+    foreach ($forbidden in @("Docker.DockerDesktop", "OpenJS.NodeJS.LTS", "OpenAI.Codex")) {
         if ($agenticContent -match [regex]::Escape($forbidden)) {
-            Add-Failure "$forbidden should not be in agentic-dev; it is WSL-first in this catalog."
+            Add-Failure "$forbidden should not be in agentic-dev winget manifest."
         }
     }
 
@@ -385,6 +426,7 @@ $bootstrapProfiles = @(Get-BootstrapProfiles)
 $manifestProfiles = @(Get-ManifestProfiles)
 
 Test-WingetManifests
+Test-MsstoreManifests -BootstrapProfiles $bootstrapProfiles
 Test-ProfileMapping -BootstrapProfiles $bootstrapProfiles -ManifestProfiles $manifestProfiles
 Test-DocumentedProfiles -BootstrapProfiles $bootstrapProfiles
 Test-AllProfileSet
