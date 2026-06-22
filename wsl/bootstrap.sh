@@ -79,6 +79,41 @@ print_file_items() {
   fi
 }
 
+mise_bin() {
+  if command -v mise >/dev/null 2>&1; then
+    command -v mise
+    return
+  fi
+
+  if [[ -x "$HOME/.local/bin/mise" ]]; then
+    printf '%s\n' "$HOME/.local/bin/mise"
+    return
+  fi
+
+  echo "mise is not available on PATH or at ${HOME}/.local/bin/mise." >&2
+  return 1
+}
+
+load_os_release() {
+  if [[ ! -r /etc/os-release ]]; then
+    echo "Cannot read /etc/os-release; unsupported distribution." >&2
+    exit 1
+  fi
+
+  # shellcheck disable=SC1091  # /etc/os-release is provided by the distro
+  . /etc/os-release
+
+  if [[ -z "${ID:-}" ]]; then
+    echo "Cannot detect Linux distribution ID from /etc/os-release." >&2
+    exit 1
+  fi
+
+  if [[ -z "${VERSION_CODENAME:-}" ]]; then
+    echo "Cannot detect VERSION_CODENAME from /etc/os-release." >&2
+    exit 1
+  fi
+}
+
 install_apt_base() {
   local file="${PACKAGES_DIR}/apt-base.txt"
   local packages
@@ -144,7 +179,7 @@ RC
 }
 
 install_mise() {
-  if ! command -v mise >/dev/null 2>&1; then
+  if ! command -v mise >/dev/null 2>&1 && [[ ! -x "$HOME/.local/bin/mise" ]]; then
     echo "==> installing mise"
     if [[ "$PLAN" == true ]]; then
       echo "[plan] curl https://mise.run | sh"
@@ -163,7 +198,9 @@ mise_use_global() {
   if [[ "$PLAN" == true ]]; then
     echo "[plan] mise use -g -y ${tool}"
   else
-    "$HOME/.local/bin/mise" use -g -y "$tool"
+    local bin
+    bin="$(mise_bin)"
+    "$bin" use -g -y "$tool"
   fi
 }
 
@@ -199,19 +236,26 @@ install_docker_engine() {
   mapfile -t packages < <(print_file_items "${PACKAGES_DIR}/docker.txt")
   printf '  %s\n' "${packages[@]}"
 
+  load_os_release
+
+  case "$ID" in
+    ubuntu|debian) ;;
+    *)
+      echo "Docker install currently supports Ubuntu or Debian WSL only. Detected: ${ID}." >&2
+      exit 1
+      ;;
+  esac
+
   run sudo apt-get update
   run sudo apt-get install -y ca-certificates curl gnupg
   run sudo install -m 0755 -d /etc/apt/keyrings
 
   if [[ "$PLAN" == true ]]; then
-    echo "[plan] install Docker apt repository and docker engine packages"
+    echo "[plan] install Docker apt repository for ${ID} ${VERSION_CODENAME} and docker engine packages"
   else
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    curl -fsSL "https://download.docker.com/linux/${ID}/gpg" | sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
     sudo chmod a+r /etc/apt/keyrings/docker.gpg
-    # shellcheck disable=SC1091  # /etc/os-release is provided by the distro
-    . /etc/os-release
-    # shellcheck disable=SC2154  # VERSION_CODENAME comes from /etc/os-release
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu ${VERSION_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${ID} ${VERSION_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
   fi
 
   run sudo apt-get update
