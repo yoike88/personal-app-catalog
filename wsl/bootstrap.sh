@@ -75,7 +75,7 @@ run() {
 print_file_items() {
   local file="$1"
   if [[ -f "$file" ]]; then
-    grep -Ev '^\s*(#|$)' "$file" || true
+    grep -Ev '^[[:space:]]*(#|$)' "$file" || true
   fi
 }
 
