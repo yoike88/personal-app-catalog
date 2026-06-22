@@ -27,14 +27,14 @@ function Get-BootstrapProfiles {
     }
 
     $content = Get-Content -Path $BootstrapPath -Raw
-    $match = [regex]::Match($content, '\[ValidateSet\((?<items>.*?)\)\]', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    $match = [regex]::Match($content, '\[ValidateSet\((.*?)\)\]', [System.Text.RegularExpressions.RegexOptions]::Singleline)
     if (-not $match.Success) {
         Add-Failure "bootstrap.ps1 has no ValidateSet for -Profile."
         return @()
     }
 
     $profiles = New-Object System.Collections.Generic.List[string]
-    foreach ($item in [regex]::Matches($match.Groups["items"].Value, '"([^"]+)"')) {
+    foreach ($item in [regex]::Matches($match.Groups[1].Value, '"([^"]+)"')) {
         $profiles.Add($item.Groups[1].Value) | Out-Null
     }
 
@@ -92,14 +92,14 @@ function Get-AllSetFromBootstrap {
     }
 
     $content = Get-Content -Path $BootstrapPath -Raw
-    $match = [regex]::Match($content, '"all"\s*\{(?<body>.*?)\}', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    $match = [regex]::Match($content, '"all"\s*\{(.*?)\}', [System.Text.RegularExpressions.RegexOptions]::Singleline)
     if (-not $match.Success) {
-        Add-Failure "bootstrap.ps1 has no 'all' resolution block."
+        Add-Failure "bootstrap.ps1 has no all resolution block."
         return @()
     }
 
     $set = New-Object System.Collections.Generic.List[string]
-    foreach ($entry in [regex]::Matches($match.Groups["body"].Value, '\.Add\("([^"]+)"\)')) {
+    foreach ($entry in [regex]::Matches($match.Groups[1].Value, '\.Add\("([^"]+)"\)')) {
         $set.Add($entry.Groups[1].Value) | Out-Null
     }
 
@@ -111,19 +111,30 @@ function Get-AllSetFromCatalog {
         return @()
     }
 
-    $content = Get-Content -Path $CatalogPath -Raw
-    $match = [regex]::Match($content, '只包含[：:](?<body>.*?)不包含', [System.Text.RegularExpressions.RegexOptions]::Singleline)
-    if (-not $match.Success) {
-        Add-Failure "catalog.md has no 'all' inclusion section."
-        return @()
+    $lines = Get-Content -Path $CatalogPath
+    $set = New-Object System.Collections.Generic.List[string]
+    $inIncludeBlock = $false
+
+    foreach ($line in $lines) {
+        if ($line -match '^`all` .*只包含') {
+            $inIncludeBlock = $true
+            continue
+        }
+
+        if ($inIncludeBlock -and $line -match '^`all` .*不包含') {
+            break
+        }
+
+        if ($inIncludeBlock) {
+            $match = [regex]::Match($line, '^-\s+`([^`]+)`')
+            if ($match.Success) {
+                $set.Add($match.Groups[1].Value) | Out-Null
+            }
+        }
     }
 
-    $set = New-Object System.Collections.Generic.List[string]
-    foreach ($entry in [regex]::Matches($match.Groups["body"].Value, '`([a-z0-9][a-z0-9-]*)`')) {
-        $value = $entry.Groups[1].Value
-        if ($value -ne "all") {
-            $set.Add($value) | Out-Null
-        }
+    if ($set.Count -eq 0) {
+        Add-Failure "catalog.md has no all inclusion section."
     }
 
     $set.ToArray() | Sort-Object -Unique
@@ -138,7 +149,7 @@ function Test-AllProfileSet {
     }
 
     if (Compare-Object -ReferenceObject $fromBootstrap -DifferenceObject $fromCatalog) {
-        Add-Failure "'all' set differs: bootstrap.ps1 = [$($fromBootstrap -join ', ')], catalog.md = [$($fromCatalog -join ', ')]."
+        Add-Failure "all set differs: bootstrap.ps1 = [$($fromBootstrap -join ', ')], catalog.md = [$($fromCatalog -join ', ')]."
     }
 }
 
@@ -297,9 +308,9 @@ function Test-WslFiles {
 }
 
 function Test-WslPackageLists {
-    $aptBase = Test-ListFile -Path (Join-Path $WslPackagesDir "apt-base.txt") -Name "wsl/packages/apt-base.txt"
-    $cli = Test-ListFile -Path (Join-Path $WslPackagesDir "cli.txt") -Name "wsl/packages/cli.txt" -RequireMiseSelector $true
-    $k8s = Test-ListFile -Path (Join-Path $WslPackagesDir "k8s.txt") -Name "wsl/packages/k8s.txt" -RequireMiseSelector $true
+    $null = Test-ListFile -Path (Join-Path $WslPackagesDir "apt-base.txt") -Name "wsl/packages/apt-base.txt"
+    $null = Test-ListFile -Path (Join-Path $WslPackagesDir "cli.txt") -Name "wsl/packages/cli.txt" -RequireMiseSelector $true
+    $null = Test-ListFile -Path (Join-Path $WslPackagesDir "k8s.txt") -Name "wsl/packages/k8s.txt" -RequireMiseSelector $true
     $docker = Test-ListFile -Path (Join-Path $WslPackagesDir "docker.txt") -Name "wsl/packages/docker.txt"
 
     $requiredDockerPackages = @("docker-ce", "docker-ce-cli", "containerd.io", "docker-buildx-plugin", "docker-compose-plugin")
