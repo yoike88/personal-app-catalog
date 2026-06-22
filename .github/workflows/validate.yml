@@ -15,13 +15,20 @@ jobs:
         shell: pwsh
         run: ./windows/validate.ps1
 
+      - name: Validate WSL files
+        run: bash wsl/validate.sh
+
   shellcheck:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Lint WSL shell script
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Lint WSL shell scripts
         run: |
           bash -n wsl/bootstrap.sh
-          shellcheck --severity=warning wsl/bootstrap.sh
+          bash -n wsl/validate.sh
+          shellcheck --severity=warning wsl/bootstrap.sh wsl/validate.sh
