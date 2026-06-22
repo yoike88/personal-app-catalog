@@ -54,7 +54,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 - VS Code / Codex / Claude 可用；
 - WSL 可用。
 
-AI 编程工具主线只保留 Codex 和 Claude；Copilot 不作为个人恢复目录的一部分。Docker Desktop 不进入默认层，Docker Engine 放 WSL。
+默认层具体安装内容以 `windows/manifests/winget-core.json` 和 `windows/manifests/winget-agentic-dev.json` 为准。Docker Engine 由 WSL 侧脚本安装。
 
 ## 5. 初始化 WSL 主开发环境
 
