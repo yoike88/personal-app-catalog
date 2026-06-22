@@ -7,8 +7,8 @@
 | 来源 | 适合内容 | 是否自动恢复 | 记录位置 |
 |---|---|---|---|
 | winget | 常规桌面应用、稳定 GUI、常规 CLI | 是 | `windows/manifests/winget-*.json` |
+| Microsoft Store | Store 优先应用、系统集成应用 | 是，受 Store 区域和上架状态影响 | `windows/manifests/msstore-*.txt` |
 | Scoop | CLI、小型开发工具、便携命令 | 是 | `windows/manifests/scoop-*.txt` |
-| Microsoft Store | Store 优先应用、系统集成应用 | 部分 | manifest 或文档 |
 | GitHub Releases | 小众开源工具、单文件工具、未进入包管理器的软件 | 通常否 | 文档记录 repo/release |
 | 官方安装器 | 商业软件、厂商工具、远控、驱动 | 通常否 | 文档记录官网和配置边界 |
 | 语言包管理器 | `npm`, `pnpm`, `uv`, `pipx`, `cargo`, `go install`, `.NET tool` | 部分 | 后续独立清单 |
@@ -22,6 +22,7 @@
 - GitHub/官方安装器来源可以成为目录的一部分，但不能伪装成可自动恢复项。
 - 同一应用只保留一个主来源，替代来源只写备注。
 - 某台设备的软件快照只是目录维护输入，不直接等同于个人应用目录。
+- Microsoft Store 包使用 Store Product ID 记录，当前文件格式为一行一个 ID，可用 `#` 写注释。
 
 ## 非 winget 候选池
 
