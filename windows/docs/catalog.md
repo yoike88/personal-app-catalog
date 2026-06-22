@@ -9,7 +9,7 @@
 | `core` | 是 | Windows 基础环境 | Chrome, NanaZip, PowerShell, Windows Terminal, Git, PowerToys, Everything, UniGetUI, LocalSend, Bitwarden |
 | `agentic-dev` | 是 | Agentic coding Windows 入口 | VS Code, Codex, Claude, GitHub CLI, WSL, Python Install Manager |
 
-`default` 等同于 `core + agentic-dev`。具体安装项以 `windows/manifests/winget-core.json` 和 `windows/manifests/winget-agentic-dev.json` 为准。
+`default` 等同于 `core + agentic-dev`。普通 winget 安装项以 `windows/manifests/winget-core.json` 和 `windows/manifests/winget-agentic-dev.json` 为准；Microsoft Store 安装项以 `windows/manifests/msstore-*.txt` 为准。
 
 Docker、Node.js、Kubernetes CLI 和主力开发 CLI 由 WSL 侧清单管理。Python Install Manager 只作为 Windows 原生 Python 入口，不作为主项目开发 Python 来源。
 
@@ -49,6 +49,12 @@ Docker、Node.js、Kubernetes CLI 和主力开发 CLI 由 WSL 侧清单管理。
 `optional-oss` 当前包含：KeePassXC, Flameshot, VSCodium, Meld。
 
 `scoop-cli` 当前包含：`ripgrep`, `fd`, `fzf`, `jq`, `yq`, `bat`, `delta`, `lazygit`, `zoxide`, `starship`, `uv`, `pnpm`, `neovim`, `just`。这些工具在 Windows 侧只作为备用；主力开发环境优先使用 WSL 版本。
+
+## Microsoft Store 层
+
+Microsoft Store 包不写入 `winget-*.json`，而是写入 `msstore-*.txt`。当前：
+
+- `windows/manifests/msstore-agentic-dev.txt`：Codex App，Store ID `9PLM9XGG6VKS`。
 
 ## WSL 层
 
