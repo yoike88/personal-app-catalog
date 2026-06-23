@@ -62,6 +62,8 @@ cd ~/projects
 |---|---|
 | `wsl/docs/wsl.md` | WSL-first 开发环境原则和初始化流程 |
 | `wsl/docs/tools.md` | WSL 工具用途、常用方式和恢复边界 |
+| `wsl/docs/config.md` | WSL 工具配置层说明 |
+| `wsl/docs/container-runtimes.md` | 容器运行时默认方案和候选方案 |
 | `wsl/docs/wsl-boundaries.md` | WSL 敏感配置、凭据和数据边界 |
 
 ## 校验
@@ -107,6 +109,8 @@ wsl --shutdown
 本项目采用 WSL 内 Docker Engine 作为主容器运行时，不再在 Windows 默认层安装 Docker Desktop。
 
 当前 Docker 安装脚本支持 Ubuntu 和 Debian WSL，会根据 `/etc/os-release` 自动选择 Docker apt 源。其他发行版需要单独补充安装逻辑。
+
+WSL Containers 记录为未来候选容器运行时，不替代当前默认 Docker Engine in WSL。候选验证清单和晋升规则见 `wsl/docs/container-runtimes.md`。
 
 推荐边界：
 
