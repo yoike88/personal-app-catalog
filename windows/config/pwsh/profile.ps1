@@ -102,6 +102,19 @@ function proxy-test {
     }
 }
 
+# Launcher for the winget-installed mihomo core. winget adds no PATH shim and
+# ships the binary under a versioned name, so resolve it dynamically (robust to
+# version bumps) and forward args, e.g. mihomo -d "$env:USERPROFILE\.config\mihomo".
+function mihomo {
+    $exe = Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\MetaCubeX.Mihomo_*\mihomo-windows-amd64.exe" -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if (-not $exe) {
+        Write-Host "mihomo not found. Install it with: winget install MetaCubeX.Mihomo"
+        return
+    }
+    & $exe.FullName @args
+}
+
 # --- Aliases / shortcuts ------------------------------------------------------
 function ll { Get-ChildItem -Force @args }
 function la { Get-ChildItem -Force -Hidden @args }

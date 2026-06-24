@@ -90,6 +90,16 @@ SOCKS:  socks5h://127.0.0.1:7890
 
 它能区分“代理没起来”和“代理起来了但当前没选中它”，对应“可诊断”原则。
 
+同一份 profile 还提供 `mihomo` 启动器。`proxy-core` 用 winget 装的 `MetaCubeX.Mihomo` 既不建 PATH shim、可执行文件名又是带平台后缀的 `mihomo-windows-amd64.exe`，所以直接敲 `mihomo` 会“找不到命令”。该函数按 `MetaCubeX.Mihomo_*` 目录动态定位 exe（适配版本升级），转发全部参数：
+
+```powershell
+mihomo -v                                    # 查看版本
+mihomo -t -d "$env:USERPROFILE\.config\mihomo"   # 只校验配置后退出
+mihomo -d "$env:USERPROFILE\.config\mihomo"      # 按配置目录运行
+```
+
+未应用配置层、或想绕过函数时，用 winget 安装目录里的完整路径运行同一个 exe 即可。
+
 ## Web UI（web 端）
 
 mihomo 自身不带面板，Web UI 是连接 `external-controller` 的独立前端。本项目推荐两种轻量方式，二选一：
