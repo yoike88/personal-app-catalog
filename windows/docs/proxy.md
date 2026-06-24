@@ -35,6 +35,8 @@ log-level: info
 - 订阅、节点、控制端 secret、机场名称不入库。
 - 使用 `mixed-port` 简化工具配置，HTTP / SOCKS 都统一指向 `127.0.0.1:7890`。
 
+完整的脱敏示例配置见 `windows/proxy/config.example.yaml`：复制为 `config.yaml` 放进 mihomo 配置目录（Windows 默认 `%USERPROFILE%\.config\mihomo\`），再填入订阅 URL 与 `secret` 两处私有值即可。`mihomo` 找不到配置时会自动生成一份只含监听骨架、无任何节点的默认配置，所以恢复时以本示例为准、不要依赖那份空壳默认。
+
 ## Windows 系统代理和 WinHTTP
 
 mihomo 开启系统代理后，浏览器和多数 GUI 会跟随 Windows 用户系统代理。

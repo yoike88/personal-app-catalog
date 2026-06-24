@@ -26,7 +26,7 @@ Git 身份（`user.name` / `user.email`）、SSH/GPG、各类账号登录、Powe
 
 建议边界：
 
-- 可以提交脱敏模板，如 `config.example.yaml`。
+- 已提交脱敏模板 `windows/proxy/config.example.yaml`；复制为 `config.yaml` 后填入订阅、`secret` 等私有值。
 - 不提交订阅、节点、secret、缓存、真实日志。
 - 不让多个 TUN 核心同时常驻。
 - 服务化路径、账号和权限按设备处理。

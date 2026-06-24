@@ -360,6 +360,7 @@ function Test-RequiredFiles {
         "windows/config/git/gitconfig.delta",
         "windows/config/vscode/extensions.txt",
         "windows/config/vscode/settings.json",
+        "windows/proxy/config.example.yaml",
         "windows/docs/config.md",
         "docs/agent-workflows.md",
         "wsl/bootstrap.sh",
