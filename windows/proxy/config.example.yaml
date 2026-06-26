@@ -14,15 +14,39 @@ bind-address: 127.0.0.1
 mode: rule
 log-level: info
 
+# ---- 性能 / 行为优化（mihomo 官方推荐，见 wiki.metacubex.one）----
+unified-delay: true                  # 去掉首次握手 RTT 偏差，url-test 测速更公平
+tcp-concurrent: true                 # 对多 IP 域名并发握手，连接更快更稳
+global-client-fingerprint: chrome    # 未单独设指纹的节点兜底 uTLS 指纹（抗封锁）
+
+# Geo 数据库自动更新（服务常驻，定期刷新规则库）
+geo-auto-update: true
+geo-update-interval: 24              # 小时
+geox-url:
+  geoip: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip-lite.dat"
+  geosite: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat"
+  mmdb: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country-lite.mmdb"
+  asn: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb"
+
+# 选择记忆：自建挂了切到应急后，重启仍保留选择（首次启动仍默认列表第一项）
+profile:
+  store-selected: true
+  # store-fake-ip: true                # 仅 TUN/fake-ip 模式有意义
+
 # ---- 控制端 / Web UI ----
-# 控制端只监听本机；secret 必填，换成本机随机值，不要留默认、不要入库。
+# 控制端只监听本机；secret 必填，换成本机随机强口令（如 openssl rand -hex 32），
+# 不要留这个占位值、不要入库。
 external-controller: 127.0.0.1:9090
 secret: "REPLACE_ME_LOCAL_SECRET"
 
-# 托管面板（metacubexd / zashboard / yacd）从 https 访问本地 http 控制端时需放开 CORS：
+# CORS：默认只放行本机自托管面板（/ui/ 与控制端同源）。不要用 ["*"]——
+# 否则浏览任意网站时，该站点的 JS 都能调本地 9090 控制端。
+# 若要用托管面板（metacubexd.github.io 等），再把该来源单独加进 allow-origins。
 external-controller-cors:
-  allow-origins: ["*"]
-  allow-private-network: true
+  allow-origins:
+    - http://127.0.0.1:9090
+    - http://localhost:9090
+  allow-private-network: false
 
 # 可选：让 mihomo 自托管面板（离线可用），面板地址 http://127.0.0.1:9090/ui/
 # external-ui: ui
@@ -153,6 +177,22 @@ rules:
 
   # 其余走代理
   - MATCH,PROXY
+
+# ---- Sniffer（域名嗅探，主要配合 TUN/fake-ip；系统代理模式价值有限，默认关闭）----
+# 切到 TUN 后建议开启：按 IP 进来的连接靠嗅探还原域名，规则才能命中。
+# sniffer:
+#   enable: true
+#   sniff:
+#     HTTP:
+#       ports: [80, 8080-8880]
+#       override-destination: true
+#     TLS:
+#       ports: [443, 8443]
+#     QUIC:
+#       ports: [443, 8443]
+#   skip-domain:
+#     - "Mijia Cloud"
+#     - "+.push.apple.com"
 
 # ---- TUN（兜底，默认关闭）----
 # TUN 容易和 WSL / Docker / VPN / Tailscale / 内网路由冲突，不建议默认常开；
