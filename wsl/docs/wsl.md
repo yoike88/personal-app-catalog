@@ -79,6 +79,8 @@ bash wsl/validate.sh
 
 ## 初始化
 
+> 前置顺序：先配好 mirrored 网络（`.\windows\configure.ps1 -Wsl` + `wsl --shutdown`），再让 apt 能走代理，最后才装工具链。否则受限网络下 `--base` 可能装不上 apt 包。完整顺序见 `windows/docs/recovery-playbook.md` 第 5 节和 `wsl/docs/proxy.md` 的 apt 小节。
+
 先预览：
 
 ```bash

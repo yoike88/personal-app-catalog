@@ -58,25 +58,56 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 ## 5. 初始化 WSL 主开发环境
 
-进入 WSL 后先预览：
+> 顺序很重要：**先装发行版 → 配 mirrored 网络 → 让 apt 能走代理 → 再装工具链**。否则受限网络下 `--base`（apt）可能拉不到包。
+
+### 5.1 安装发行版
+
+```powershell
+.\windows\wsl-distro.ps1 -Install -Distro Ubuntu-26.04 -SetDefault
+```
+
+首次需启动该发行版一次，创建 Linux 用户和密码。
+
+### 5.2 配置 mirrored 网络
+
+```powershell
+.\windows\configure.ps1 -Wsl     # 写入 %USERPROFILE%\.wslconfig（mirrored networking）
+wsl --shutdown                   # 重启 WSL 生效
+```
+
+重进 WSL 验证（应输出 `mirrored`）：
+
+```bash
+wslinfo --networking-mode
+```
+
+### 5.3 让 apt 能走代理
+
+确保 Windows 侧 mihomo 已监听 `127.0.0.1:7890`。mirrored 下 WSL（含 root）可直接访问它。`sudo apt` 不继承 shell 的代理变量，所以给 apt 单独配（详见 `wsl/docs/proxy.md` 的 apt 小节）：
+
+```bash
+sudo tee /etc/apt/apt.conf.d/99proxy >/dev/null <<'EOF'
+Acquire::http::Proxy "http://127.0.0.1:7890";
+Acquire::https::Proxy "http://127.0.0.1:7890";
+EOF
+```
+
+### 5.4 安装工具链
+
+先预览，再安装基础开发、CLI、K8s 工具链并应用配置层：
 
 ```bash
 ./wsl/bootstrap.sh --base --cli --k8s --plan
+./wsl/bootstrap.sh --base --cli --k8s --config
 ```
 
-安装基础开发、CLI 和 K8s 工具链：
+`--cli` / `--k8s` 走 mise（预编译二进制，下载读 `http_proxy`，可先 `proxy_on`）。`--config` 应用脱敏配置模板（nvim、starship、tmux、别名、git 等），覆盖前先备份。
 
-```bash
-./wsl/bootstrap.sh --base --cli --k8s
-```
-
-安装 Docker Engine 到 WSL：
+### 5.5 安装 Docker Engine
 
 ```bash
 ./wsl/bootstrap.sh --docker
 ```
-
-安装 Docker 后重启 WSL：
 
 ```powershell
 wsl --shutdown
@@ -87,6 +118,14 @@ wsl --shutdown
 ```bash
 docker version
 docker compose version
+```
+
+### 5.6 收尾
+
+基础包装完后，若不想 apt 长期依赖代理（mihomo 关掉会报错），移除临时代理：
+
+```bash
+sudo rm -f /etc/apt/apt.conf.d/99proxy
 ```
 
 ## 6. 恢复账号和基础配置

@@ -4,6 +4,7 @@ param(
     [switch] $Terminal,
     [switch] $Git,
     [switch] $VSCode,
+    [switch] $Wsl,
     [switch] $All,
     [switch] $Plan
 )
@@ -15,12 +16,13 @@ $ConfigDir = Join-Path $ScriptRootPath "config"
 $Marker = "# personal-app-catalog"
 
 function Show-Usage {
-    Write-Host "Usage: .\windows\configure.ps1 [-Pwsh] [-Terminal] [-Git] [-VSCode] [-All] [-Plan]"
+    Write-Host "Usage: .\windows\configure.ps1 [-Pwsh] [-Terminal] [-Git] [-VSCode] [-Wsl] [-All] [-Plan]"
     Write-Host ""
     Write-Host "  -Pwsh      Install PowerShell modules and a managed profile"
     Write-Host "  -Terminal  Merge Windows Terminal defaults (font, color scheme)"
     Write-Host "  -Git       Reference the shared Git config via include.path"
     Write-Host "  -VSCode    Install recommended extensions and merge user settings"
+    Write-Host "  -Wsl       Write %USERPROFILE%\.wslconfig (mirrored networking)"
     Write-Host "  -All       Apply all of the above"
     Write-Host "  -Plan      Print what would change without writing anything"
     Write-Host ""
@@ -349,6 +351,28 @@ function Invoke-VSCodeConfig {
     Write-Host "    merged VS Code settings into $settingsPath"
 }
 
+function Invoke-WslConfig {
+    Write-Host "==> WSL .wslconfig (mirrored networking)"
+
+    # WSL reads the global config from %USERPROFILE%\.wslconfig.
+    $profileRoot = $env:USERPROFILE
+    if ([string]::IsNullOrWhiteSpace($profileRoot)) { $profileRoot = $HOME }
+    if ([string]::IsNullOrWhiteSpace($profileRoot)) {
+        Write-Host "    [skip] user profile path not available."
+        return
+    }
+
+    # INI can't be deep-merged, so this is a whole-file write; Copy-Template backs up
+    # any existing .wslconfig and skips when the content already matches.
+    $source = Join-Path $ConfigDir "wsl/wslconfig"
+    $target = Join-Path $profileRoot ".wslconfig"
+    Copy-Template -Source $source -Destination $target
+
+    if (-not $Plan.IsPresent) {
+        Write-Host "    Restart WSL to apply: wsl --shutdown  (then reopen WSL)"
+    }
+}
+
 function Write-DependencyHint {
     $optional = @("delta", "fzf", "starship", "lazygit", "bat")
     $missing = @($optional | Where-Object { -not (Get-Command $_ -ErrorAction SilentlyContinue) })
@@ -358,7 +382,7 @@ function Write-DependencyHint {
     }
 }
 
-if (-not ($Pwsh -or $Terminal -or $Git -or $VSCode -or $All)) {
+if (-not ($Pwsh -or $Terminal -or $Git -or $VSCode -or $Wsl -or $All)) {
     Show-Usage
     exit 1
 }
@@ -371,6 +395,7 @@ if ($All -or $Pwsh)     { Invoke-PwshConfig }
 if ($All -or $Terminal) { Invoke-TerminalConfig }
 if ($All -or $Git)      { Invoke-GitConfig }
 if ($All -or $VSCode)   { Invoke-VSCodeConfig }
+if ($All -or $Wsl)      { Invoke-WslConfig }
 
 Write-DependencyHint
 

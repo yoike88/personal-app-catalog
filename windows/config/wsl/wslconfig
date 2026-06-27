@@ -1,0 +1,27 @@
+# personal-app-catalog — Windows global WSL2 config template
+#
+# Applied to %USERPROFILE%\.wslconfig by:  .\windows\configure.ps1 -Wsl
+# After applying, restart WSL for it to take effect:  wsl --shutdown
+#
+# NOTE: this file is written whole (INI can't be deep-merged). Any existing
+# .wslconfig is backed up as .wslconfig.bak.<timestamp> first — if you had
+# device-specific resource caps below, copy them back from the backup.
+#
+# mirrored networking requires WSL >= 2.0.0 and Windows 11 22H2+.
+
+[wsl2]
+# Mirror the host network into WSL: shared localhost both ways, better VPN/IPv6,
+# no NAT port-forwarding. The project's proxy strategy (127.0.0.1:7890) assumes this.
+networkingMode=mirrored
+# Resolve DNS through the host — helps name resolution under VPN / mirrored mode.
+dnsTunneling=true
+# Auto-inject HTTP(S) proxy from the Windows system proxy into new WSL shells.
+autoProxy=true
+# Route WSL traffic through the Hyper-V firewall.
+firewall=true
+
+# --- Optional, device-specific. Uncomment and tune per machine; not a default. ---
+# memory=8GB
+# processors=4
+# swap=8GB
+# localhostForwarding=true

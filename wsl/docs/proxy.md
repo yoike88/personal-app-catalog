@@ -12,7 +12,14 @@ mihomo 推荐监听本机：
 127.0.0.1:7890
 ```
 
-Windows 全局 WSL 配置建议放在 `%UserProfile%\.wslconfig`：
+Windows 全局 WSL 配置放在 `%UserProfile%\.wslconfig`。可手工创建，也可用配置层一键写入（plan-first、覆盖前备份，模板见 `windows/config/wsl/wslconfig`）：
+
+```powershell
+.\windows\configure.ps1 -Wsl -Plan   # 预览
+.\windows\configure.ps1 -Wsl          # 应用（-All 也包含它）
+```
+
+模板内容：
 
 ```ini
 [wsl2]
@@ -22,7 +29,7 @@ autoProxy=true
 firewall=true
 ```
 
-修改后重启 WSL：
+修改后重启 WSL 生效：
 
 ```powershell
 wsl --shutdown
@@ -42,6 +49,27 @@ mirrored 模式下，WSL 通常可以直接访问 Windows 本机的 `127.0.0.1:7
 - 如果 autoProxy 已注入代理，再 `proxy_on` 只是覆盖成相同/自定义的值，影响不大。
 - 但 `proxy_off` 是 `unset`，它**不会恢复** autoProxy 注入的值——要恢复 autoProxy 的自动代理，新开一个 shell 即可。
 - 判断当前 shell 到底有没有代理、是谁给的，用 `proxy_status` 和 `proxy_test`（见下）。
+
+## apt（系统包，sudo 场景）
+
+`sudo apt` **不继承**你 shell 里的 `http_proxy` / `https_proxy`（autoProxy 注入的也一样），Ubuntu 默认 sudoers 不 `env_keep` 这些变量。所以即使 `proxy_on`，`sudo apt update` 仍可能连不上——这就是新机首次 `./wsl/bootstrap.sh --base` 在受限网络下装不上 apt 包的原因。
+
+给 apt 单独配代理（mirrored 下 root 也能访问 Windows 的 `127.0.0.1:7890`）：
+
+```bash
+sudo tee /etc/apt/apt.conf.d/99proxy >/dev/null <<'EOF'
+Acquire::http::Proxy "http://127.0.0.1:7890";
+Acquire::https::Proxy "http://127.0.0.1:7890";
+EOF
+```
+
+`--base` 装完后，如果不想让 apt 长期依赖代理（mihomo 关掉时 apt 会报错），移除它：
+
+```bash
+sudo rm -f /etc/apt/apt.conf.d/99proxy
+```
+
+这是本机运行期配置，不入库，`wsl/bootstrap.sh` 不会替你写（代理不作为 bootstrap 默认副作用）。
 
 ## Shell 临时代理函数
 

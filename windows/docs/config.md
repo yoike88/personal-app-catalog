@@ -15,6 +15,7 @@
 .\windows\configure.ps1 -Terminal       # 仅 Windows Terminal
 .\windows\configure.ps1 -Git            # 仅 Git 共享配置
 .\windows\configure.ps1 -VSCode         # 仅 VS Code 扩展与设置
+.\windows\configure.ps1 -Wsl            # 仅写 %USERPROFILE%\.wslconfig（mirrored 网络）
 ```
 
 行为：
@@ -23,6 +24,7 @@
 - 覆盖前先备份。已存在的目标文件会被复制为 `<file>.bak.<时间戳>`。
 - PowerShell profile 不覆盖你已有的 `$PROFILE`，而是把托管 profile 拷为 `catalog.profile.ps1`，并在 `$PROFILE` 中追加一行带标记的 dot-source。
 - Windows Terminal 设置采用深合并，保留你已有的 profiles，只覆盖 defaults（字体、配色等）。
+- `.wslconfig` 是 INI，无法深合并，采用**整文件写入**（已存在的先备份为 `.bak`）。若你原来有设备级 `memory`/`processors`/`swap` 等设置，从备份里挪回。改完执行 `wsl --shutdown` 才生效。
 
 ## 模板清单
 
@@ -35,6 +37,7 @@
 | `config/git/gitconfig.delta` | `~\catalog-delta.gitconfig`（仅在检测到 delta 时通过 `include.path` 引入） | delta pager 与 diff filter 设置 |
 | `config/vscode/extensions.txt` | `code --install-extension`（逐个，已装则跳过） | 推荐扩展清单：Remote/Containers、K8s、Python、TS/Vue、Java/Spring Boot、YAML/TOML/Markdown、Git、Jupyter、项目管理、中文语言包 |
 | `config/vscode/settings.json` | VS Code 用户 `settings.json`（深合并） | formatOnSave、各语言默认 formatter、关闭遥测、允许中文文档非 ASCII 等（不含账号/Sync 密钥/token） |
+| `config/wsl/wslconfig` | `%USERPROFILE%\.wslconfig`（整文件写入，先备份） | WSL2 全局网络：mirrored networking、dnsTunneling、autoProxy、firewall；设备级资源上限（memory/processors/swap）以注释示例给出 |
 
 ## 代理
 

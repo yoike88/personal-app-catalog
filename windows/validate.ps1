@@ -416,6 +416,7 @@ function Test-RequiredFiles {
         "windows/config/git/gitconfig.delta",
         "windows/config/vscode/extensions.txt",
         "windows/config/vscode/settings.json",
+        "windows/config/wsl/wslconfig",
         "windows/proxy/config.example.yaml",
         "windows/docs/config.md",
         "docs/agent-workflows.md",

@@ -109,6 +109,28 @@ wsl --list --online
 
 首次安装发行版后，需要启动该发行版一次，创建 Linux 用户和密码。
 
+## WSL 网络与代理（apt 前置）
+
+装完发行版、装 apt 包之前先把网络配好，否则受限网络下 `--base`（apt）可能拉不到包。
+
+先配 mirrored networking：
+
+```powershell
+.\windows\configure.ps1 -Wsl   # 写入 %USERPROFILE%\.wslconfig
+wsl --shutdown                 # 重启生效
+```
+
+再让 apt 走 Windows mihomo（mirrored 下 root 可达 `127.0.0.1:7890`；`sudo apt` 不继承 shell 代理变量，需单独配）：
+
+```bash
+sudo tee /etc/apt/apt.conf.d/99proxy >/dev/null <<'EOF'
+Acquire::http::Proxy "http://127.0.0.1:7890";
+Acquire::https::Proxy "http://127.0.0.1:7890";
+EOF
+```
+
+基础包装完后可移除：`sudo rm -f /etc/apt/apt.conf.d/99proxy`。详见 `wsl/docs/proxy.md`。
+
 ## WSL 侧初始化
 
 WSL 侧是主开发、运维、Docker 和 CLI 执行环境。进入 WSL 后先校验和预览：

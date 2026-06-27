@@ -30,7 +30,16 @@ WSL 侧需要先有 Linux 发行版。本项目默认发行版基线是 `Ubuntu-
 .\windows\wsl-distro.ps1 -Install -Distro Ubuntu-26.04 -SetDefault
 ```
 
-首次安装后需要启动该发行版一次，创建 Linux 用户。之后进入 WSL，在仓库目录下执行：
+首次安装后需要启动该发行版一次，创建 Linux 用户。
+
+装 apt 包前先配 mirrored 网络（受限网络下还需让 apt 走代理，见 `wsl/docs/proxy.md` 的 apt 小节）：
+
+```powershell
+.\windows\configure.ps1 -Wsl
+wsl --shutdown
+```
+
+之后进入 WSL，在仓库目录下执行：
 
 ```bash
 bash wsl/validate.sh
@@ -75,7 +84,7 @@ Docker Engine 安装到 WSL：
 .\windows\bootstrap.ps1 -Profile daily,network,automation,dev-extra -WithScoop -Plan -Report
 ```
 
-应用工具优化配置（PowerShell、Windows Terminal、Git 共享配置；覆盖前先备份）：
+应用工具优化配置（PowerShell、Windows Terminal、Git 共享配置、WSL `.wslconfig` mirrored 网络；覆盖前先备份）：
 
 ```powershell
 .\windows\configure.ps1 -All -Plan
